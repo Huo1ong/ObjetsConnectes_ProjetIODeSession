@@ -1,0 +1,92 @@
+#type, #caracteristique, #controle {
+    padding:1px 0;
+}
+
+#type {
+    text-align:left;
+}
+
+#main {
+    /*max-width:960px;*/
+    margin:auto;
+}
+
+img {
+    width: 220px;
+}
+
+p {
+    color: rgba(0, 0, 255, 0.808);
+    font-weight: bold;
+}
+
+select {
+margin-left: 50px;
+background: linear-gradient(white, rgb(148, 238, 148));
+border-width: 3px;
+border-color: black;
+width: 300px;
+font-weight: bold;
+}
+
+#caracteristique_bois  {
+float:left;
+width:300px;
+border-color: #000000;
+border-style: solid;
+border-width: 3px;
+margin-left: 50px;
+}
+
+#controle{
+    position: absolute;
+    margin-top: -298px;
+    margin-left: 370px;
+}
+#controle_temp {
+margin-left:25px;
+width: 350px;
+border-color: #000000;
+border-style: solid;
+border-width: 3px;
+text-align: center;
+}
+
+/* Bouton "Démarrage du four" */
+.styled {
+    border: 0;
+    line-height: 2.5;
+    padding: 0 20px;
+    font-size: 1rem;
+    text-align: center;
+    color: black;
+    font-weight: bold;
+    border-radius: 20px;
+    background-color: rgb(102, 182, 228);
+}
+.styled:active {
+    box-shadow: inset -2px -2px 3px rgba(255, 255, 255, .6),
+                inset 2px 2px 3px rgba(0, 0, 0, .6);
+}
+
+.cercleRouge {
+    height: 10px;
+    width: 10px;
+    background-color: rgb(233, 20, 20);
+    border-radius: 50%;
+    display: inline-block;
+}
+.cercleJaune {
+    height: 10px;
+    width: 10px;
+    background-color: rgb(233, 219, 20);
+    border-radius: 50%;
+    display: inline-block;
+}
+.cercleVert {
+    height: 10px;
+    width: 10px;
+    background-color: rgba(40, 192, 35, 0.795);
+    border-radius: 50%;
+    display: inline-block;
+}

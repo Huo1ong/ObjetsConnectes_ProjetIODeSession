@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Page web</title>
+  <link rel="stylesheet" href="index.css"/>
+  <script type="text/javascript" src="script.js"></script>
+</head>
+<body>
+    <img src="sac.png" alt="image">
+    <div id="type">
+        <h2>Type de bois</h2>
+        <!-- Listebox des différents types de bois -->
+        <form action="typeBois_ListBox_Select">
+            <select id="NomBois" name="NomBois" form="typeBois_ListBox_Select">
+                <option value="érable">Érable</option>
+                <option value="sapin">Sapin</option>
+                <option value="hêtre">Hêtre</option>
+                <option value="bouleau">Bouleau</option>
+              </select>
+        </form>
+    </div>
+
+    <div id="main">
+        <div id="caracteristique">
+            <h2>Caractéristiques</h2>
+            <!-- Caractéristiques du bois choisi avant -->
+            <div id="caracteristique_bois">
+                <ul>
+                    Bois  
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+                    : <label>Érable</label>
+                    <br>
+                    Type  
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+                     : &nbsp;<label>dur</label>
+                    <br>
+                    Origine  
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+                     :  <label>US</label>
+                    <br>
+                    Temps de séchage 
+                    &nbsp;&nbsp; 
+                    : <label>20 </label> secondes
+                    <br>
+                    Température min
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                    : <label>25</label> Celcius
+                </ul>
+            </div>
+        </div>
+
+        <div id="controle">
+            <br>
+            <h2>Contrôle du four de séchage</h2>
+            <div id="controle_temp">
+                <h3>Température du four</h3>
+                <br><br><br>
+                <!-- Température ambiante du four -->
+                <label id='temp'> TemperatureDuFour</label><label>°C</label>
+                <br><br><br><br><br><br>
+                <!-- Bouton "Démarrage du four" -->
+                <a href="/btnFour">
+                    <button class="favorite styled" type="button">
+                        Démarrage du four
+                    </button>
+                </a>
+                <script type="text/javascript">
+                    getFromESP_getColorBackground();
+                </script>
+                <br><br><br>
+                <!-- Caractétistiques du bois choisi avant -->
+                <span id='nameCurrentControl'>Érable</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+                    <span id='tmpCurrentControl'>0s/20s</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+                    <span id='tempCurrentControl'>(min 25 Celcius) 
+                    <i class="fa cercleRouge"></i> 
+                    <i class="fa cercleJaune"></i> 
+                    <i class="fa cercleVert"></i>
+                </span>
+                <br><br>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
