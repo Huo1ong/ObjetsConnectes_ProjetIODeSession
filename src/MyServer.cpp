@@ -63,14 +63,15 @@ void MyServer::initAllRoutes() {
     });
 
     //Bouton "Démarrage du four" -> compte à rebours
-    this->on("/btnFour", HTTP_GET, [](AsyncWebServerRequest *request)
-    {
-        if (ptrToCallBackFunction) 
-        {
-            (*ptrToCallBackFunction)("btnFour");
-            request->send(SPIFFS, "/index.html", "text/html");
+    this->on("/btnFour", HTTP_POST, [](AsyncWebServerRequest *request) {
+        if (request->hasParam("btnFour", true)) {
+        String actionToDo = request->getParam("btnFour", true)->value();
+        if (string(actionToDo.c_str()).compare(string("btnFour")) == 0) {
+            if (ptrToCallBackFunction)(*ptrToCallBackFunction)("btnFour");
+            }
         }
-    });
+        request->send(204);
+        });
     
     //getNom
     this->on("/getNomEsp", HTTP_GET, [](AsyncWebServerRequest *request)
@@ -79,15 +80,6 @@ void MyServer::initAllRoutes() {
         if (ptrToCallBackFunction) repString = (*ptrToCallBackFunction)("askNomFour");
         String lireNomDuFour =String(repString.c_str());
         request->send(200, "text/plain", lireNomDuFour );
-    });
-
-    //Changer Background-color
-    this->on("/getColorBackground", HTTP_GET, [](AsyncWebServerRequest *request)
-    {
-        std::string repString = "";
-        if (ptrToCallBackFunction) repString = (*ptrToCallBackFunction)("askCouleurBackground");
-        String changeBackgroundColor =String(repString.c_str());
-        request->send(200, "text/plain", changeBackgroundColor );
     });
 
     //getTemperature

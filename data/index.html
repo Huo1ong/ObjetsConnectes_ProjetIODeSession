@@ -57,22 +57,21 @@
                 <h3>Température du four</h3>
                 <br><br><br>
                 <!-- Température ambiante du four -->
-                <label id='temp'> TemperatureDuFour</label><label>°C</label>
+                <label id='temp'> TemperatureDuFour</label>
                 <br><br><br><br><br><br>
                 <!-- Bouton "Démarrage du four" -->
-                <a href="/btnFour">
-                    <button class="favorite styled" type="button">
-                        Démarrage du four
-                    </button>
-                </a>
+                <button onclick="doAction('btnFour')" class="favorite styled" type="button">
+                    Démarrage du four
+                </button>
                 <script type="text/javascript">
                     getFromESP_getColorBackground();
                 </script>
                 <br><br><br>
                 <!-- Caractétistiques du bois choisi avant -->
                 <span id='nameCurrentControl'>Érable</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
-                    <span id='tmpCurrentControl'>0s/20s</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
-                    <span id='tempCurrentControl'>(min 25 Celcius) 
+                <span id='tmpCurrentControl'><span id='secondes'></span>/20s</span>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+                <span id='tempCurrentControl'>(min 25 Celcius) 
                     <i class="fa cercleRouge"></i> 
                     <i class="fa cercleJaune"></i> 
                     <i class="fa cercleVert"></i>

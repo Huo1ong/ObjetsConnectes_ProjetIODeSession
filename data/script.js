@@ -34,10 +34,21 @@ setInterval (function getNomSysteme()
     {
         if(this.status == 200)
         {
-            document.getElementById("temp").innerHTML = this.responseText;
+            var maReponseText = this.responseText.split(";");
+            document.getElementById("temp").innerHTML = maReponseText[0];
+            document.getElementById("secondes").innerHTML = maReponseText[1];
         }
     };
     xhttp.open("GET", "lireTemp", true);
     xhttp.send();
-}, 5000);
+}, 1000);
+
+function doAction(actionToDo) {
+    var params = String("btnFour") + String("=") + String(actionToDo);
+    var xhttp = new XMLHttpRequest();
+    xhttp.open("POST", "btnFour", true);
+    xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    xhttp.send(params);
+    demarrer = true;
+}
    

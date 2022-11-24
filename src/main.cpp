@@ -1,23 +1,23 @@
-/* Copyright (C) 2021 Alain Dube
+/* Copyright (C) 2022
  * All rights reserved.
  *
  * Projet Sac
  * Ecole du Web
- * Cours Objets connectés (c)2021
+ * Cours Objets connectés (c)2022
  *  
     @file     main.cpp
     @author   Alain Dubé
-    @version  1.1 21/08/15 
+    @version  1.2 03/11/22 
 
     Historique des versions
            Version    Date       Auteur       Description
            1.1        21/08/15  Alain       Première version du logiciel
+           1.2        03/11/22  Quentin     Seconde version du logiciel
 
     platform = espressif32
     board = esp32doit-devkit-v1
     framework = arduino
-    lib_deps = 
-                      
+    lib_deps =  
             ESPAsyncWebServer-esphome                   (Pour accéder au Wifi)
             AsyncTCP-esphome                            (Pour utiliser les focntionnalités TCP)
             bblanchon/ArduinoJson@^6.17.2               (Pour accéder au fonctionnalités Json)
@@ -49,26 +49,23 @@
                 script.js               V1.0    JS (fonctions JavaScript)
               
  * */
+using namespace std;
 
 #include <iostream>
 #include <string>
-
 #include <Arduino.h>
 #include <ArduinoJson.h>
-
-#include "myFunctions.cpp" //fonctions utilitaires
-
-using namespace std;
-
+#include <wire.h>
 #include <HTTPClient.h>
+
 #include <WiFiManager.h>
 WiFiManager wm;
 #define WEBSERVER_H
 
 //Pour avoir les données du senseur de température
 #include "TemperatureStub.h"
-#define DHTPIN  15   // Pin utilisée par le senseur / DHT22
-#define DHTTYPE DHT22  //Le type de senseur utilisé (mais ce serait mieux d'avoir des DHT22 pour plus de précision)
+#define DHTPIN  15                 // Pin utilisée par le senseur / DHT22
+#define DHTTYPE DHT22              //Le type de senseur utilisé (mais ce serait mieux d'avoir des DHT22 pour plus de précision)
 TemperatureStub *temperatureStub = NULL;
 
 //Pour la gestion du serveur ESP32
@@ -80,17 +77,58 @@ const char *SSID = "SAC_";
 const char *PASSWORD = "sac_";
 String ssIDRandom;
 
+//Écran OLED
+#define SCREEN_WIDTH 128        // OLED display width, in pixels
+#define SCREEN_HEIGHT 64        // OLED display height, in pixels
+#define OLED_RESET 4            // Reset pin # (or -1 if sharing Arduino reset pin)
+#define OLED_I2C_ADDRESS 0x3C   // Adresse I2C de l'écran Oled
+
 //LEDS 
 //Définition des trois leds de statut
-#define GPIO_PIN_LED_OK_GREEN           14 //GPIO14
-#define GPIO_PIN_LED_HEAT_BLUE        27 //GPIO27
-#define GPIO_PIN_LED_LOCK_ROUGE         12 //GPIO12
+#define GPIO_PIN_LED_OK_VERTE 14           //GPIO14 - VERTE
+#define GPIO_PIN_LED_HEAT_JAUNE 27         //GPIO27 - JAUNE
+#define GPIO_PIN_LED_LOCK_ROUGE 12         //GPIO12 - ROUGE
 
-std::string tempDuFour = "22"; //Lire le senseur de température
+//Fonctions utilitaires
+#include "myFunctions.cpp" 
 
-boolean btnFour = false; //Bouton démarrage du four
+//Classes
+#include "MyOled.h"
+    MyOled *myoled = new MyOled(&Wire,OLED_RESET, SCREEN_HEIGHT, SCREEN_WIDTH);
+#include "MyOledView.h"
+    MyOledView *myoledview = NULL;
+#include "MyOledViewInitialisation.h"
+    MyOledViewInitialisation *myoledviewinitialisation = NULL;
+#include "MyOledViewWorking.h"
+    MyOledViewWorking *myoledviewworking = NULL;
+#include "MyOledViewWifiAp.h"
+    MyOledViewWifiAp *myoledviewwifiap = NULL;
+#include "MyOledViewWorkingOFF.h"
+    MyOledViewWorkingOFF *myoledviewworkingoff = NULL;
+#include "MyOledViewWorkingCOLD.h"
+    MyOledViewWorkingCOLD *myoledviewworkingcold = NULL;
+#include "MyOledViewWorkingHEAT.h"
+    MyOledViewWorkingHEAT *myoledviewworkingheat = NULL;
+#include "MyOledViewErrorWifiConnexion.h"
+    MyOledViewErrorWifiConnexion *myoledviewerrorwificonnexion = NULL;
 
-int delayTimer = 0; //Pour compter le nombre de secondes depuis le début
+//Boutons Action et Reset
+#include "MyButton.h"
+MyButton *myButtonAction = NULL;
+MyButton *myButtonReset = NULL;
+
+//Variables utilisées
+std::string tempDuFour = "22";              //Lire le senseur de température
+boolean btnFour = false;                    //Bouton démarrage du four
+int delayTimer = 0;                         //Pour compter le nombre de secondes depuis le début
+int etatDuFour = 0;                         //État du four à '0' pour commencer (3 états prédéfinis : 0 = OFF, 1 = COLD et 2 = HEAT)
+string nomDuSysteme = "SAC system";         //Nom du système prédéfini
+string idDuSysteme = "Id: 1303";            //Id du système prédéfini
+char buffer[100];
+float temperature = 0;
+float temperatureDemandee = 28;
+int nbrDeSecondes = 20;
+
 
 //fonction statique qui permet aux objets d'envoyer des messages (callBack) 
 //  arg0 : Action 
@@ -113,12 +151,16 @@ std::string CallBackMessageListener(string message) {
     //Obtenir température ambiante
     if (string(actionToDo.c_str()).compare(string("askTempFour")) == 0)
     {
-        return(tempDuFour.c_str());
+        temperature = temperatureStub->getTemperature();
+        //sprintf(buffer, "%4.1f", temperature);
+        sprintf(buffer, "%4.1f °C;%is", temperature, nbrDeSecondes);
+        return(buffer);
     }
 
     //Bouton "Démarrage du four"
     if (string(actionToDo.c_str()).compare(string("btnFour")) == 0)
     {
+       Serial.println("Démarrage du four.");
        btnFour = true;
        return "ok";
     }
@@ -128,31 +170,76 @@ std::string CallBackMessageListener(string message) {
     return result;
     }
 
-void setup() { 
+void NouveauParametre()
+{
+    switch(etatDuFour)
+    {
+        case 0:   //État OFF
+            myoledviewworkingoff = new MyOledViewWorkingOFF();
+            myoledviewworkingoff->setParams("nomDuSysteme", nomDuSysteme.c_str());
+            myoledviewworkingoff->setParams("idDuSysteme", idDuSysteme.c_str());
+            myoledviewworkingoff->setParams("ipDuSysteme", WiFi.localIP().toString().c_str());
+            myoledviewworkingoff->setParams("temperatureDuSysteme",buffer);
+            myoled->displayView(myoledviewworkingoff);
+            break;
+
+        case 1:   //État COLD
+            myoledviewworkingcold = new MyOledViewWorkingCOLD();
+            myoledviewworkingcold->setParams("nomDuSysteme", nomDuSysteme.c_str());
+            myoledviewworkingcold->setParams("idDuSysteme", idDuSysteme.c_str());
+            myoledviewworkingcold->setParams("ipDuSysteme", WiFi.localIP().toString().c_str());
+            myoledviewworkingcold->setParams("temperatureDuSysteme",buffer);
+            myoled->displayView(myoledviewworkingcold);
+            break;
+        
+        case 2:   //État HEAT
+            myoledviewworkingheat = new MyOledViewWorkingHEAT();
+            myoledviewworkingheat->setParams("nomDuSysteme", nomDuSysteme.c_str());
+            myoledviewworkingheat->setParams("idDuSysteme", idDuSysteme.c_str());
+            myoledviewworkingheat->setParams("ipDuSysteme", WiFi.localIP().toString().c_str());
+            myoledviewworkingheat->setParams("temperatureDuSysteme",buffer);
+            myoled->displayView(myoledviewworkingheat);
+            break;
+    }
+} 
+
+void setup() 
+{ 
     Serial.begin(9600);
     delay(100);
 
-    //Initiation pour la lecture de la température
-    temperatureStub = new TemperatureStub;
-    temperatureStub->init(DHTPIN, DHTTYPE); //Pin 15 et Type DHT22
-
     //LEDS
     //Initialisation des LED statuts
-    pinMode(GPIO_PIN_LED_OK_GREEN, OUTPUT);
-    pinMode(GPIO_PIN_LED_HEAT_BLUE, OUTPUT);
+    pinMode(GPIO_PIN_LED_OK_VERTE, OUTPUT);
+    pinMode(GPIO_PIN_LED_HEAT_JAUNE, OUTPUT);
     pinMode(GPIO_PIN_LED_LOCK_ROUGE, OUTPUT);
 
-    //Faire clignoter les Leds à l'initialisation
-    for (int i=0;i<2;i++) {
-        digitalWrite(GPIO_PIN_LED_OK_GREEN,HIGH);
-        digitalWrite(GPIO_PIN_LED_HEAT_BLUE,HIGH);
-        digitalWrite(GPIO_PIN_LED_LOCK_ROUGE,HIGH);
-        delay(1000);
-        digitalWrite(GPIO_PIN_LED_OK_GREEN,LOW);
-        digitalWrite(GPIO_PIN_LED_HEAT_BLUE,LOW);
-        digitalWrite(GPIO_PIN_LED_LOCK_ROUGE,LOW);
-        delay(1000); 
-    }
+    //INITIALISATION ÉCRAN INIT
+    myoled->init(OLED_I2C_ADDRESS, true);
+
+    myoledviewinitialisation = new MyOledViewInitialisation();
+    myoledviewinitialisation->setNomDuSysteme("SAC system");
+    myoledviewinitialisation->setIdDuSysteme("ID : ID1303");
+    myoledviewinitialisation->setSensibiliteBoutonAction("????");
+    myoledviewinitialisation->setSensibiliteBoutonReset("????");
+    myoled->displayView(myoledviewinitialisation);
+
+    //Gestion des boutons
+    myButtonAction = new MyButton();        //Pour lire le bouton actions
+    myButtonAction->init(T8);
+    int sensibilisationButtonAction = myButtonAction->autoSensibilisation();
+
+    myButtonReset = new MyButton();         //Pour lire le bouton hard reset
+    myButtonReset->init(T9);
+    int sensibilisationButtonReset = myButtonReset->autoSensibilisation();
+
+    myoledviewinitialisation->setSensibiliteBoutonAction(String(sensibilisationButtonAction).c_str());
+    myoledviewinitialisation->setSensibiliteBoutonReset(String(sensibilisationButtonReset).c_str());
+    myoled->displayView(myoledviewinitialisation);
+
+
+    Serial.print("sensibilisationButtonAction : "); Serial.println(sensibilisationButtonAction);
+    Serial.print("sensibilisationButtonReset : "); Serial.println(sensibilisationButtonReset);
 
     //Connection au WifiManager
     String ssIDRandom, PASSRandom;
@@ -163,6 +250,16 @@ void setup() {
     stringRandom = get_random_string(4).c_str();
     PASSRandom = PASSWORD;
     PASSRandom = PASSRandom + stringRandom;
+
+    myoledviewwifiap = new MyOledViewWifiAp();
+    myoledviewwifiap->setNomDuSysteme("SAC system");
+    myoledviewwifiap->setNomDuSysteme("AP Configuration");
+    myoledviewwifiap->setSsIdDuSysteme(String(ssIDRandom).c_str());
+    myoledviewwifiap->setPassDuSysteme(String(PASSRandom).c_str()); 
+    myoled->displayView(myoledviewwifiap);
+   
+    Serial.print("SSID : "); Serial.println(ssIDRandom);
+    Serial.print("PASS : "); Serial.println(PASSRandom);
 
     char strToPrint[128];
     sprintf(strToPrint, "Identification : %s   MotDePasse: %s", ssIDRandom, PASSRandom);
@@ -176,34 +273,82 @@ void setup() {
     else 
     {
         Serial.println("Connexion Établie.");
+
+        //Faire clignoter les Leds à l'initialisation une fois la connexion établie
+        for (int i=0;i<2;i++) 
+        {
+            digitalWrite(GPIO_PIN_LED_LOCK_ROUGE,HIGH);
+            digitalWrite(GPIO_PIN_LED_HEAT_JAUNE,HIGH);
+            digitalWrite(GPIO_PIN_LED_OK_VERTE,HIGH);
+            delay(1000);
+            
+            digitalWrite(GPIO_PIN_LED_LOCK_ROUGE,LOW);
+            digitalWrite(GPIO_PIN_LED_HEAT_JAUNE,LOW);
+            digitalWrite(GPIO_PIN_LED_OK_VERTE,LOW);
+            delay(1000); 
+        }
+        myoledviewworkingoff = new MyOledViewWorkingOFF();
+        myoled->displayView(myoledviewworkingoff);
     }
 
     // ----------- Routes du serveur ----------------
     myServer = new MyServer(80);
     myServer->initAllRoutes();
     myServer->initCallback(&CallBackMessageListener);
+
+    //Initiation pour la lecture de la température
+    temperatureStub = new TemperatureStub;
+    temperatureStub->init(DHTPIN, DHTTYPE); //Pin 15 et Type DHT22
  }
 
 void loop() 
 {
     //Gestion de la température
     float t = temperatureStub->getTemperature();
-    //Pas l'utilité pour le moment
-        //Serial.print("Température : ");
-        //Serial.println(t);
     tempDuFour = String(t).c_str();
+    sprintf(buffer, "%4.1f", t);
+    NouveauParametre();
+
+    digitalWrite(GPIO_PIN_LED_OK_VERTE,HIGH);
+    digitalWrite(GPIO_PIN_LED_LOCK_ROUGE,LOW);
+    digitalWrite(GPIO_PIN_LED_HEAT_JAUNE,LOW);
 
     if(btnFour == true)
     {
-        btnFour = false;
-        Serial.println("Démarrage du four.");
-        int i;
-        for(i = 20; i != -1; i--)
+        if(t >= (temperatureDemandee * 0.90) && t <= (temperatureDemandee / 0.90)) //Si la température est entre 20.7 et 25.5
         {
-            printf("Il vous reste %ld secondes.\n", i);
-            
+            etatDuFour = 2;
+            printf("Il vous reste %ld secondes.\n", nbrDeSecondes);
+            nbrDeSecondes --;
+                
+            if(nbrDeSecondes == 0)
+            {
+                Serial.println("Fin du temps. Le séchage du bois est terminé !");
+                etatDuFour = 0;
+                btnFour = false;
+                nbrDeSecondes = 20;
+            }
         }
-        printf("Fin du temps. Le séchage du bois est terminé !");
+        //Si la température ambiante est inférieur à celle demandée (20.7)
+            if(t < (temperatureDemandee * 0.90))
+            {
+                    etatDuFour = 1;
+
+                    digitalWrite(GPIO_PIN_LED_OK_VERTE,LOW);
+                    digitalWrite(GPIO_PIN_LED_HEAT_JAUNE,HIGH);
+
+                    btnFour = false;
+                    nbrDeSecondes = 20;
+            }
+
+            //Si la température ambiante est supérieur à celle demandée (25.5)
+            if(t > (temperatureDemandee / 0.90))
+            {
+                    etatDuFour = 1;
+                    
+                    digitalWrite(GPIO_PIN_LED_LOCK_ROUGE,HIGH);
+                    digitalWrite(GPIO_PIN_LED_OK_VERTE,LOW);
+            }
     }
     delay(1000);
 }
