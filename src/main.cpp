@@ -315,7 +315,8 @@ void loop()
 
     if(btnFour == true)
     {
-        if(t >= (temperatureDemandee * 0.90) && t <= (temperatureDemandee / 0.90)) //Si la température est entre 20.7 et 25.5
+        //Si la température est entre 20.7 et 25.5
+        if(t >= (temperatureDemandee * 0.90) && t <= (temperatureDemandee / 0.90)) 
         {
             etatDuFour = 2;
             printf("Il vous reste %ld secondes.\n", nbrDeSecondes);
@@ -329,7 +330,7 @@ void loop()
                 nbrDeSecondes = 20;
             }
         }
-        //Si la température ambiante est inférieur à celle demandée (20.7)
+            //Si la température ambiante est inférieur à celle demandée (20.7)
             if(t < (temperatureDemandee * 0.90))
             {
                     etatDuFour = 1;
