@@ -11,41 +11,28 @@
     <div id="type">
         <h2>Type de bois</h2>
         <!-- Listebox des différents types de bois -->
-        <form action="typeBois_ListBox_Select">
-            <select id="NomBois" name="NomBois" form="typeBois_ListBox_Select">
-                <option value="érable">Érable</option>
-                <option value="sapin">Sapin</option>
-                <option value="hêtre">Hêtre</option>
-                <option value="bouleau">Bouleau</option>
+        <form action="NomBois">
+            <select id="NomBois" name="NomBois" onchange="afficherBois()">
+                <option>Défaut</option>
               </select>
         </form>
     </div>
 
     <div id="main">
-        <div id="caracteristique">
+        <div >
             <h2>Caractéristiques</h2>
             <!-- Caractéristiques du bois choisi avant -->
-            <div id="caracteristique_bois">
+            <div id="caracteristique">
                 <ul>
-                    Bois  
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
-                    : <label>Érable</label>
+                    <li>Bois : <label id="caracteristique_bois"></label></li>
                     <br>
-                    Type  
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
-                     : &nbsp;<label>dur</label>
+                    <li>Type : &nbsp;<label id="caracteristique_type"></label></li>
                     <br>
-                    Origine  
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
-                     :  <label>US</label>
+                    <li>Origine  :  <label id="caracteristique_origine"></label></li>
                     <br>
-                    Temps de séchage 
-                    &nbsp;&nbsp; 
-                    : <label>20 </label> secondes
+                    <li>Temps de séchage : <label id="caracteristique_tempsDeSechage"> </label> secondes</li>
                     <br>
-                    Température min
-                    &nbsp;&nbsp;&nbsp;&nbsp;
-                    : <label>25</label> Celcius
+                    <li>Température min : <label id="caracteristique_temperatureMin"></label> Celcius</li>
                 </ul>
             </div>
         </div>
@@ -64,12 +51,12 @@
                     Démarrage du four
                 </button>
                 <script type="text/javascript">
-                    getFromESP_getColorBackground();
+                    getFromESP_ListeWood();
                 </script>
                 <br><br><br>
                 <!-- Caractétistiques du bois choisi avant -->
-                <span id='nameCurrentControl'>Érable</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
-                <span id='tmpCurrentControl'><span id='secondes'></span>/20s</span>
+                <span id='controle_bois'>Érable</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+                <span id='secondes'></span>/<span id='tempsDeSechage'>20s</span>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
                 <span id='tempCurrentControl'>(min 25 Celcius) 
                     <i class="fa cercleRouge"></i> 
