@@ -20,3 +20,6 @@ Il faut savoir que si la température ambiante n'est pas égale à celle désir�
 
 ## Utilité
 Ce projet va aider l'entreprise de fabrication de meubles, Les Meubles Dubé inc. dans laquelle nous aidons.
+
+## Fiche service web
+http://149.56.141.62:3000/myApiDocs/
