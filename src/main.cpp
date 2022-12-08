@@ -55,12 +55,18 @@ using namespace std;
 #include <string>
 #include <Arduino.h>
 #include <ArduinoJson.h>
-#include <wire.h>
+#include <Wire.h>
 #include <HTTPClient.h>
+HTTPClient http;
 
 #include <WiFiManager.h>
 WiFiManager wm;
 #define WEBSERVER_H
+
+#include <WifiClient.h>
+
+  // My code moved from loop() ...
+  WiFiClient client;
 
 //Pour avoir les données du senseur de température
 #include "TemperatureStub.h"
@@ -118,6 +124,8 @@ MyButton *myButtonAction = NULL;
 MyButton *myButtonReset = NULL;
 
 //Variables utilisées
+String JsonListeBois;
+String JsonLeBois;
 std::string tempDuFour = "22";              //Lire le senseur de température
 boolean btnFour = false;                    //Bouton démarrage du four
 int delayTimer = 0;                         //Pour compter le nombre de secondes depuis le début
@@ -128,6 +136,7 @@ char buffer[100];
 float temperature = 0;
 float temperatureDemandee = 28;
 int nbrDeSecondes = 20;
+int tempsDeSechage = 20;
 
 
 //fonction statique qui permet aux objets d'envoyer des messages (callBack) 
@@ -164,6 +173,32 @@ std::string CallBackMessageListener(string message) {
        btnFour = true;
        return "ok";
     }
+
+    if (string(actionToDo.c_str()).compare(string("askListeWood")) == 0) {
+        http.begin(client, "http://149.56.141.62:3000/api/woods/getAllWoods");
+        http.GET();
+        JsonListeBois = http.getString();
+        Serial.println(JsonListeBois);
+        http.end();
+        return(JsonListeBois.c_str()); }
+
+    if (string(actionToDo.c_str()).compare(string("afficherBois")) == 0) {
+        char buffer[100];
+        sprintf(buffer, "http://149.56.141.62:3000/api/woods/getWood/%S", arg1.c_str());
+        http.begin(client, buffer);
+        http.addHeader("Authorization","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2Njg3ODUyMjF9.jhT6LpcaUyx5w0gXGldjC9TZxymvArrzvPt6GG2WukM");
+        http.GET();
+        JsonLeBois = http.getString();
+        Serial.println(JsonLeBois);
+        http.end();
+        DynamicJsonDocument doc(2048);
+        deserializeJson(doc,JsonLeBois);
+        for(JsonObject elem : doc.as<JsonArray>()){
+            temperatureDemandee = elem["temperature"];
+            tempsDeSechage = elem["dryingTime"];
+            nbrDeSecondes = tempsDeSechage;
+        }
+        return(JsonLeBois.c_str()); }
 
 
     std::string result = "";
@@ -309,45 +344,48 @@ void loop()
     sprintf(buffer, "%4.1f", t);
     NouveauParametre();
 
-    digitalWrite(GPIO_PIN_LED_OK_VERTE,HIGH);
-    digitalWrite(GPIO_PIN_LED_LOCK_ROUGE,LOW);
-    digitalWrite(GPIO_PIN_LED_HEAT_JAUNE,LOW);
-
     if(btnFour == true)
     {
-        if(t >= (temperatureDemandee * 0.90) && t <= (temperatureDemandee / 0.90)) //Si la température est entre 20.7 et 25.5
+        //Si la température est entre 20.7 et 25.5
+        if(t >= (temperatureDemandee * 0.90) && t <= (temperatureDemandee / 0.90)) 
         {
             etatDuFour = 2;
             printf("Il vous reste %ld secondes.\n", nbrDeSecondes);
             nbrDeSecondes --;
+
+            digitalWrite(GPIO_PIN_LED_OK_VERTE,LOW);
+            digitalWrite(GPIO_PIN_LED_LOCK_ROUGE,HIGH);
+            digitalWrite(GPIO_PIN_LED_HEAT_JAUNE,LOW);
                 
             if(nbrDeSecondes == 0)
             {
                 Serial.println("Fin du temps. Le séchage du bois est terminé !");
+                digitalWrite(GPIO_PIN_LED_LOCK_ROUGE,LOW);
+                digitalWrite(GPIO_PIN_LED_OK_VERTE,HIGH);
                 etatDuFour = 0;
                 btnFour = false;
-                nbrDeSecondes = 20;
+                nbrDeSecondes = tempsDeSechage;
             }
         }
-        //Si la température ambiante est inférieur à celle demandée (20.7)
+            //Si la température ambiante est inférieur à celle demandée
             if(t < (temperatureDemandee * 0.90))
             {
                     etatDuFour = 1;
 
-                    digitalWrite(GPIO_PIN_LED_OK_VERTE,LOW);
+                    digitalWrite(GPIO_PIN_LED_LOCK_ROUGE,LOW);
                     digitalWrite(GPIO_PIN_LED_HEAT_JAUNE,HIGH);
 
                     btnFour = false;
-                    nbrDeSecondes = 20;
+                    nbrDeSecondes = tempsDeSechage;
             }
 
-            //Si la température ambiante est supérieur à celle demandée (25.5)
+            //Si la température ambiante est supérieur à celle demandée
             if(t > (temperatureDemandee / 0.90))
             {
                     etatDuFour = 1;
                     
-                    digitalWrite(GPIO_PIN_LED_LOCK_ROUGE,HIGH);
-                    digitalWrite(GPIO_PIN_LED_OK_VERTE,LOW);
+                    digitalWrite(GPIO_PIN_LED_LOCK_ROUGE,LOW);
+                    digitalWrite(GPIO_PIN_LED_HEAT_JAUNE,HIGH);
             }
     }
     delay(1000);
