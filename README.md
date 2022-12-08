@@ -1,4 +1,4 @@
-## Projet C# de session : "SAC" (Système Atmosphérique Connecté)
+## Projet C de session : "SAC" (Système Atmosphérique Connecté)
 	# Matière : Objets Connectés
 	# Professeur : Dubé Alain
 	# Auteurs : Baudry Thomas - Guillou Quentin
